@@ -60,6 +60,7 @@ import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.embedding.engine.dart.DartExecutor.DartCallback;
 
 import android.content.res.AssetManager;
+import android.util.Log;
 
 import io.flutter.view.FlutterNativeView;
 import io.flutter.view.FlutterRunArguments;

@@ -402,6 +402,7 @@ public class AudioService extends MediaBrowserServiceCompat {
 				}
 			}
 		}
+
 		if (displayTitle != null)
 			builder.putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, displayTitle);
 		if (displaySubtitle != null)
@@ -553,6 +554,7 @@ public class AudioService extends MediaBrowserServiceCompat {
 	}
 
 	public class MediaSessionCallback extends MediaSessionCompat.Callback {
+
 		@Override
 		public void onAddQueueItem(MediaDescriptionCompat description) {
 			if (listener == null) return;
