@@ -15,8 +15,6 @@ import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
-import android.media.MediaDescription;
-import android.media.MediaMetadata;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,7 +27,6 @@ import android.support.v4.media.RatingCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 import android.util.LruCache;
 import android.view.KeyEvent;
 
@@ -161,8 +158,13 @@ public class AudioService extends MediaBrowserServiceCompat {
 		mediaSession.setActive(false);
 		releaseWakeLock();
 		stopForeground(true);
-		notificationCreated = false;
 		stopSelf();
+		// This still does not solve the Android 11 problem.
+		// if (notificationCreated) {
+		// 	NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+		// 	notificationManager.cancel(NOTIFICATION_ID);
+		// }
+		notificationCreated = false;
 	}
 
 	public static boolean isRunning() {
@@ -377,7 +379,7 @@ public class AudioService extends MediaBrowserServiceCompat {
 			wakeLock.release();
 	}
 
-	static MediaMetadataCompat createMediaMetadata(String mediaId, String album, String title, String artist, String genre, Long duration, String artUri, String displayTitle, String displaySubtitle, String displayDescription, RatingCompat rating, Map<?, ?> extras) {
+	static MediaMetadataCompat createMediaMetadata(String mediaId, String album, String title, String artist, String genre, Long duration, String artUri, Boolean playable, String displayTitle, String displaySubtitle, String displayDescription, RatingCompat rating, Map<?, ?> extras) {
 		MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder()
 				.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, mediaId)
 				.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
@@ -402,7 +404,8 @@ public class AudioService extends MediaBrowserServiceCompat {
 				}
 			}
 		}
-
+		if (playable != null)
+			builder.putLong("playable_long", playable ? 1 : 0);
 		if (displayTitle != null)
 			builder.putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, displayTitle);
 		if (displaySubtitle != null)
@@ -422,6 +425,10 @@ public class AudioService extends MediaBrowserServiceCompat {
 					builder.putLong("extra_long_" + key, (Integer)value);
 				} else if (value instanceof String) {
 					builder.putString("extra_string_" + key, (String)value);
+				} else if (value instanceof Boolean) {
+					builder.putLong("extra_boolean_" + key, (Boolean)value ? 1 : 0);
+				} else if (value instanceof Double) {
+					builder.putString("extra_double_" + key, value.toString());
 				}
 			}
 		}
@@ -554,7 +561,6 @@ public class AudioService extends MediaBrowserServiceCompat {
 	}
 
 	public class MediaSessionCallback extends MediaSessionCompat.Callback {
-
 		@Override
 		public void onAddQueueItem(MediaDescriptionCompat description) {
 			if (listener == null) return;
