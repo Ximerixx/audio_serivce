@@ -527,10 +527,49 @@ public class AudioService extends MediaBrowserServiceCompat {
 		return new BrowserRoot(MEDIA_ROOT_ID, null);
 	}
 
+	//Create fake media item for android auto
+	private MediaBrowserCompat.MediaItem androidAutoPreloadMediaItem(String id, String title) {
+		MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
+				.setMediaId(id)
+				.setTitle(title)
+				.build();
+		return new MediaBrowserCompat.MediaItem(description, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
+	}
+
 	@Override
 	public void onLoadChildren(final String parentMediaId, final Result<List<MediaBrowserCompat.MediaItem>> result) {
 		if (listener == null) {
-			result.sendResult(new ArrayList<MediaBrowserCompat.MediaItem>());
+
+			//Freezer not started actions
+			if (parentMediaId != null && parentMediaId.startsWith("__")) {
+				Intent intent = getPackageManager().getLaunchIntentForPackage("f.f.freezer");
+
+				//Start Freezer
+				if (parentMediaId.equals("__start")) {
+					startActivity(intent);
+				}
+				//Start with Flow
+				if (parentMediaId.equals("__flow")) {
+					intent.putExtra("preload", "flow");
+					startActivity(intent);
+				}
+				//Start with favorites
+				if (parentMediaId.equals("__favorites")) {
+					intent.putExtra("preload", "favorites");
+					startActivity(intent);
+				}
+
+				result.sendResult(new ArrayList<MediaBrowserCompat.MediaItem>());
+				return;
+			}
+
+			ArrayList<MediaBrowserCompat.MediaItem> out = new ArrayList<>();
+			//Start Freezer MediaItem
+			out.add(androidAutoPreloadMediaItem("__start", "Start Freezer"));
+			out.add(androidAutoPreloadMediaItem("__flow", "Start Flow"));
+			out.add(androidAutoPreloadMediaItem("__favorites", "Start Favorites"));
+
+			result.sendResult(out);
 			return;
 		}
 		listener.onLoadChildren(parentMediaId, result);
